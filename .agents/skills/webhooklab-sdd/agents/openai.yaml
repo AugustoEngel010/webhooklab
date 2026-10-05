@@ -1,0 +1,4 @@
+interface:
+  display_name: "WebhookLab SDD"
+  short_description: "Implementar tarefas com specs e testes rastreáveis"
+  default_prompt: "Use $webhooklab-sdd para implementar T-01 do WebhookLab."

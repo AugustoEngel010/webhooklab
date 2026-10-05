@@ -1,0 +1,46 @@
+# Java / Maven
+target/
+.m2/
+*.class
+*.log
+
+# Local configuration
+.env
+.env.*
+!.env.example
+application-local.yml
+application-*.local.yml
+
+# Codex / agent-only files
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local development data
+*.db
+*.sqlite
+*.sqlite3
+docker-data/
+postgres-data/
+docker-compose.override.yml
+
+# Credentials and certificates
+*.pem
+*.key
+*.p12
+*.jks
+secrets/
+
+# Temporary generated output
+coverage/
+tmp/
+*.pid
+*.seed
+*.swp
+*.swo
