@@ -38,24 +38,52 @@ O primeiro marco está concluído quando POST /events e GET /events/{id} funcion
 | T-02 | T-01 | Concluída: RF-01/RF-02 verificados por testes HTTP com PostgreSQL real via Testcontainers |
 | T-03 | T-02 | ConcluÃ­da: RF-03 verificado por testes HTTP com PostgreSQL real via Testcontainers |
 
-## EvidÃªncia T-03
+<!-- Evidência histórica da T-03 consolidada abaixo. -->
 
 - Contrato paginado documentado; `GET /events` usa `LIMIT/OFFSET` e ordenaÃ§Ã£o `created_at DESC, id DESC`.
 - `EventApiIT` cobre padrÃµes, duas pÃ¡ginas, empate, vazio, pÃ¡gina alÃ©m, limite 100 e rejeiÃ§Ãµes.
 - Comando: `& .\\mvnw.cmd verify`. Resultado observado: `BUILD SUCCESS`; Failsafe executou `EventApiIT` com 8 testes e `WebhookLabApplicationIT` com 1, todos sem falhas/erros; Testcontainers iniciou PostgreSQL 17.11.
-| T-04 | T-02 | Pendente |
-| T-05 | T-04 | Pendente |
+| T-04 | T-02 | Concluída: RF-04 verificado por 7 testes de integração com PostgreSQL real via Testcontainers |
+| T-05 | T-04 | Concluída: RF-05/RF-06/RF-07 verificados por integração HTTP com WireMock e PostgreSQL real |
 | T-06 | T-03 e T-05 | Pendente |
 | T-07 | T-06 | Pendente |
 | T-08 | Build disponível; concluir antes da entrega V1 | Pendente |
 
-## Evidências
+## Evidências T-01
 
-- T-01: bootstrap Spring Boot Java 21, Maven Wrapper, configuração PostgreSQL/Flyway/Hibernate, `Dockerfile`, `docker-compose.yml` e teste `WebhookLabApplicationIT` criados.
+- Bootstrap Spring Boot Java 21, Maven Wrapper, configuração PostgreSQL/Flyway/Hibernate, `Dockerfile`, `docker-compose.yml` e teste `WebhookLabApplicationIT` criados.
 - Comando: `& .\mvnw.cmd clean verify`. Resultado observado: `BUILD SUCCESS`; Testcontainers 2.0.2 iniciou PostgreSQL 17.11 e o contexto Spring Boot conectou ao banco sem falhas.
 - Comandos: `docker compose up --build -d`; `docker compose ps`; `docker compose logs app --tail 100`; `curl.exe -i http://localhost:8080/`. Resultado observado: imagem construída, PostgreSQL `healthy`, aplicação em execução e HTTP 404 na raiz, esperado antes dos endpoints da T-02.
-- T-02: migration `V1__create_events.sql`, domínio sem frameworks, portas/casos de uso, adapter JDBC e endpoints em `src/main/java`; testes em `EventApiIT`.
+
+## Evidências T-02
+
+- Migration `V1__create_events.sql`, domínio sem frameworks, portas/casos de uso, adapter JDBC e endpoints em `src/main/java`; testes em `EventApiIT`.
 - Comando: `& .\\mvnw.cmd verify`. Resultado observado: `BUILD SUCCESS`; Flyway aplicou 1 migration e Failsafe executou 5 testes, sem falhas ou erros.
-- T-02 cobre criação 201/Location/PENDING, payload persistido, consulta 200, rejeição 400/sem persistência e consulta 400/404. T-04 em diante permanecem pendentes.
+- Cobertura: criação 201/Location/PENDING, payload persistido, consulta 200, rejeição 400 sem persistência e consulta 400/404.
+
+## Evidências T-03
+
+- Contrato paginado documentado; `GET /events` usa `LIMIT/OFFSET` e ordenação `created_at DESC, id DESC`; testes HTTP cobrem padrões, duas páginas, empate, vazio, página além, limite 100 e rejeições.
+- Comando: `& .\\mvnw.cmd clean verify`. Resultado observado: `BUILD SUCCESS`; Failsafe executou `EventApiIT` com 8 testes e `WebhookLabApplicationIT` com 1, todos sem falhas/erros; Testcontainers iniciou PostgreSQL 17.11.
+- Comandos manuais: `docker compose up --build -d`; `Invoke-RestMethod` para POST de `ORDER_CREATED`; `Invoke-RestMethod "http://localhost:8080/events?page=0&size=20"`; `ConvertTo-Json -Depth 10`. Resultado observado pelo usuário: container iniciado, PostgreSQL saudável, evento `PENDING` criado, `page=0`, `size=20`, `totalElements=1`, `totalPages=1` e payload completo visualizado.
+
+## Evidências T-04
+
+- Migration `V2__create_delivery_attempts.sql` com FK para `events`, `UNIQUE(event_id)`, estados de resultado e timestamps; modelo, portas e claim transacional implementados sem acoplar o domínio a frameworks.
+- Comando: `& .\\mvnw.cmd -q '-Dtest=DeliveryAttemptIT' test`. Resultado observado: `Tests run: 7, Failures: 0, Errors: 0`; PostgreSQL 17.11 iniciou via Testcontainers.
+- Cobertura: PENDING→SENDING com tentativa STARTED, concorrência com um único envio, HTTP 409, rejeição de SENDING/DELIVERED/FAILED, rollback do claim, envio fora da transação e preservação de SENDING/STARTED quando o resultado externo é desconhecido.
+- Comando: `& .\\mvnw.cmd verify`. Resultado observado: `BUILD SUCCESS`; Failsafe executou 16 testes, sem falhas/erros; Flyway validou e aplicou V1 e V2 em PostgreSQL 17.11.
+- Comandos reproduzidos pelo usuário: `docker ps`; `& .\\mvnw.cmd verify`. Resultado informado: PostgreSQL `healthy`, aplicação `Up` e verificação concluída com sucesso.
+- Limitação histórica da T-04: o adapter HTTP e a conclusão foram entregues na T-05.
+
+## Evidências T-05
+
+- `HttpDeliverySender` usa `DELIVERY_TARGET_URL`, envelope JSON, `X-Webhook-Event-Id`, timeout de conexão de 1 s, timeout de request de 3 s e `Redirect.NEVER`; não há retentativas.
+- `DeliverEventService` confirma a reclamação antes do sender e conclui evento/tentativa em nova transação; datas usam UTC e duração usa relógio monotônico.
+- `DeliveryHttpIT` cobre envelope/header, 204, 302 sem redirect, timeout, erro de conexão, persistência, 409 e envio único.
+- `& .\mvnw.cmd -q '-Dtest=DeliveryAttemptIT' test`: Surefire observou 7 testes, 0 falhas/erros.
+- `& .\mvnw.cmd -q '-Dtest=DeliveryHttpIT' test`: Surefire observou 4 testes, 0 falhas/erros; Testcontainers iniciou PostgreSQL 17.11.
+- Comando adicional: `& .\mvnw.cmd verify`. Resultado observado em 06/10/2026 às 17:45:46: `BUILD SUCCESS`; Failsafe executou 20 testes, 0 falhas e 0 erros, em 43,056 s.
+- Os avisos do Springdoc sobre `springdoc.api-docs.enabled=false` e `springdoc.swagger-ui.enabled=false` são apenas recomendações de configuração para produção e não afetaram a verificação.
 
 Preencher, por tarefa: requisito atendido, arquivos alterados, comando executado, resultado observado e limitações. Não marcar concluída apenas por existir código ou por o agente afirmar sucesso.
