@@ -156,7 +156,10 @@ class EventApiIT {
                 new String[]{"size", "-1"}, new String[]{"size", "101"},
                 new String[]{"page", "abc"}, new String[]{"size", "abc"})) {
             mockMvc.perform(get("/events").param(params[0], params[1]))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+                    .andExpect(jsonPath("$.detail").value("Request parameters or body are invalid"));
         }
     }
 

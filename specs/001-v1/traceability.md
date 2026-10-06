@@ -1,5 +1,13 @@
 # Rastreabilidade — WebhookLab V1
 
+## Evidências T-06
+
+| RF-02 | Consulta consolidada sem tentativa, com tentativa completa e STARTED | `EventApiIT`, `DeliveryHttpIT:getsPersistedHttpErrorTimeoutAndConnectionErrorHistory`, `DeliveryAttemptIT:startedAttemptIsVisibleWithNullCompletionFields` | `& .\\mvnw.cmd verify` | BUILD SUCCESS; GET retornou o histórico completo, com campos finais nulos em STARTED |
+| RF-08 | Persistência após fechar e iniciar nova instância com o mesmo PostgreSQL | `DurableHistoryIT:samePostgresIsReadByASecondApplicationInstance` | `& .\\mvnw.cmd verify` | BUILD SUCCESS; a segunda instância releu payload, timestamps UTC, duração, outcome e httpStatus do banco |
+| RF-08 | SENDING/STARTED preservado após reinício, sem reclassificação ou reenvio | `DurableHistoryIT:startedHistoryRemainsStartedAfterApplicationRestart` | `& .\\mvnw.cmd verify` | BUILD SUCCESS; estado e campos finais nulos permaneceram no mesmo banco |
+| RF-02/RF-08 | Erros 400, 404, 409 e 503 no formato público | `ApiExceptionsTest:persistenceFailureUsesPublic503ContractWithoutTechnicalDetail`, `EventApiIT`, `DeliveryAttemptIT` | `& .\\mvnw.cmd verify` | BUILD SUCCESS; códigos públicos confirmados e detalhe técnico não exposto |
+| RF-08 | Validação manual após reinício somente da aplicação | PowerShell: `Invoke-RestMethod POST /events`, `POST /events/{id}/deliver`, `GET /events/{id}`, `docker compose stop app`, `docker compose start app`, novo `GET /events/{id}` | Comandos executados pelo usuário em 06/10/2026 | O evento `c09e1e66-6d29-44bc-b0a7-e7b5a74f5d74` e a tentativa `e6a9f141-6ae6-40b8-8c39-d5c786fb4870` permaneceram consultáveis como `FAILED`/`CONNECTION_ERROR`, com `httpStatus: null` e `durationMs: 38`; nenhum novo envio ocorreu |
+
 Todos os cenários abaixo são planejados. Nenhum teste da aplicação foi implementado ou executado nesta estrutura inicial.
 
 | Requisito | Cenário | Teste implementado | Comando | Resultado |
@@ -25,7 +33,6 @@ Todos os cenários abaixo são planejados. Nenhum teste da aplicação foi imple
 | RF-06 | Registrar 302 como HTTP_ERROR sem redirecionamento | `src/test/java/dev/augusto/webhooklab/DeliveryHttpIT.java:persistsHttpErrorAndDoesNotFollowRedirect` | `& .\mvnw.cmd -q '-Dtest=DeliveryHttpIT' test` | Cenário passou; status 302 preservado e uma chamada verificada |
 | RF-07 | Registrar timeout e erro de conexão sem status | `src/test/java/dev/augusto/webhooklab/DeliveryHttpIT.java:persistsTimeoutAndRejectsSecondDeliveryWithoutSendingAgain`, `classifiesConnectionFailureWithoutHttpStatus` | `& .\mvnw.cmd -q '-Dtest=DeliveryHttpIT' test` | Cenários passaram; resposta síncrona após timeout e httpStatus nulo |
 | RF-05/RF-06/RF-07 | Verificação completa da entrega HTTP, persistência e concorrência | `DeliveryAttemptIT`, `DeliveryHttpIT`, `EventApiIT`, `WebhookLabApplicationIT` | `& .\mvnw.cmd verify` | Observado em 06/10/2026: `BUILD SUCCESS`; 20 testes, 0 falhas, 0 erros; duração 43,056 s |
-| RF-08 | Preservar histórico, timestamps e duração após reinício | Pendente | — | Não executado |
 
 Após executar, substituir Pendente pelo caminho e classe/método reais do teste, preencher o comando e o resultado observado. Acrescentar linhas quando necessário para distinguir cenários.
 | RF-03 | Valores padrÃ£o page=0/size=20 e total da pÃ¡gina | `src/test/java/dev/augusto/webhooklab/EventApiIT.java:listsWithDefaultPageAndSize` | `& .\\mvnw.cmd verify` | BUILD SUCCESS; Failsafe confirmou o teste entre 8 testes de EventApiIT |

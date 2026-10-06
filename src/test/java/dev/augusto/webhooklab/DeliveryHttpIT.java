@@ -24,11 +24,13 @@ import java.net.http.HttpClient;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import java.sql.Timestamp;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Testcontainers
@@ -75,6 +77,14 @@ class DeliveryHttpIT {
                 .withRequestBody(matchingJsonPath("$.payload.orderId", equalTo("A-1"))));
         assertEquals("DELIVERED", jdbc.queryForObject("SELECT status FROM events WHERE id = ?", String.class, id));
         assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM delivery_attempts WHERE event_id = ? AND completed_at IS NOT NULL AND duration_ms >= 0", Integer.class, id));
+        mockMvc.perform(get("/events/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.attempt.id").isNotEmpty())
+                .andExpect(jsonPath("$.attempt.startedAt").isNotEmpty())
+                .andExpect(jsonPath("$.attempt.completedAt").isNotEmpty())
+                .andExpect(jsonPath("$.attempt.durationMs").isNumber())
+                .andExpect(jsonPath("$.attempt.outcome").value("SUCCEEDED"))
+                .andExpect(jsonPath("$.attempt.httpStatus").value(204));
     }
 
     @Test
@@ -97,6 +107,33 @@ class DeliveryHttpIT {
                 .andExpect(jsonPath("$.httpStatus").doesNotExist());
         mockMvc.perform(post("/events/{id}/deliver", id)).andExpect(status().isConflict());
         WIREMOCK.verify(1, postRequestedFor(urlEqualTo("/webhook")));
+    }
+
+    @Test
+    void getsPersistedHttpErrorTimeoutAndConnectionErrorHistory() throws Exception {
+        for (var outcome : new Object[][]{
+                {DeliveryAttemptStatus.HTTP_ERROR, 503},
+                {DeliveryAttemptStatus.TIMEOUT, null},
+                {DeliveryAttemptStatus.CONNECTION_ERROR, null}}) {
+            UUID eventId = UUID.randomUUID();
+            UUID attemptId = UUID.randomUUID();
+            Instant started = Instant.parse("2026-10-06T14:00:00Z");
+            Instant completed = started.plusSeconds(1);
+            jdbc.update("INSERT INTO events (id, event_type, payload, status, created_at) VALUES (?, 'FAILURE', '{}'::jsonb, 'FAILED', ?)",
+                    eventId, Timestamp.from(started.minusSeconds(1)));
+            jdbc.update("INSERT INTO delivery_attempts (id, event_id, started_at, completed_at, duration_ms, outcome, http_status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    attemptId, eventId, Timestamp.from(started), Timestamp.from(completed), 1000L,
+                    ((DeliveryAttemptStatus) outcome[0]).name(), outcome[1]);
+
+            var result = mockMvc.perform(get("/events/{id}", eventId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.attempt.id").value(attemptId.toString()))
+                    .andExpect(jsonPath("$.attempt.outcome").value(((DeliveryAttemptStatus) outcome[0]).name()))
+                    .andExpect(jsonPath("$.attempt.completedAt").isNotEmpty())
+                    .andExpect(jsonPath("$.attempt.durationMs").value(1000));
+            if (outcome[1] == null) result.andExpect(jsonPath("$.attempt.httpStatus").doesNotExist());
+            else result.andExpect(jsonPath("$.attempt.httpStatus").value(outcome[1]));
+        }
     }
 
     @Test

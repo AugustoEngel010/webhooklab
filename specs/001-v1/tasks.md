@@ -45,7 +45,7 @@ O primeiro marco está concluído quando POST /events e GET /events/{id} funcion
 - Comando: `& .\\mvnw.cmd verify`. Resultado observado: `BUILD SUCCESS`; Failsafe executou `EventApiIT` com 8 testes e `WebhookLabApplicationIT` com 1, todos sem falhas/erros; Testcontainers iniciou PostgreSQL 17.11.
 | T-04 | T-02 | Concluída: RF-04 verificado por 7 testes de integração com PostgreSQL real via Testcontainers |
 | T-05 | T-04 | Concluída: RF-05/RF-06/RF-07 verificados por integração HTTP com WireMock e PostgreSQL real |
-| T-06 | T-03 e T-05 | Pendente |
+| T-06 | T-03 e T-05 | Concluída: RF-02/RF-08 e erros padronizados verificados por testes HTTP, Testcontainers e reinício da aplicação |
 | T-07 | T-06 | Pendente |
 | T-08 | Build disponível; concluir antes da entrega V1 | Pendente |
 
@@ -85,5 +85,14 @@ O primeiro marco está concluído quando POST /events e GET /events/{id} funcion
 - `& .\mvnw.cmd -q '-Dtest=DeliveryHttpIT' test`: Surefire observou 4 testes, 0 falhas/erros; Testcontainers iniciou PostgreSQL 17.11.
 - Comando adicional: `& .\mvnw.cmd verify`. Resultado observado em 06/10/2026 às 17:45:46: `BUILD SUCCESS`; Failsafe executou 20 testes, 0 falhas e 0 erros, em 43,056 s.
 - Os avisos do Springdoc sobre `springdoc.api-docs.enabled=false` e `springdoc.swagger-ui.enabled=false` são apenas recomendações de configuração para produção e não afetaram a verificação.
+
+## Evidências T-06
+
+- `GET /events/{id}` agora lê `events` e `delivery_attempts` em uma consulta com `LEFT JOIN`, retornando o histórico completo; `STARTED` permanece com campos de término nulos.
+- Evidência manual reproduzida pelo usuário em 06/10/2026: `docker compose stop app`; `docker compose start app`; `Start-Sleep -Seconds 5`; `Invoke-RestMethod GET /events/{id}`. O evento `c09e1e66-6d29-44bc-b0a7-e7b5a74f5d74` continuou `FAILED`, com a mesma tentativa `e6a9f141-6ae6-40b8-8c39-d5c786fb4870`, `CONNECTION_ERROR`, `httpStatus: null`, timestamps e `durationMs: 38`.
+- Resultado observado: PostgreSQL permaneceu preservado e a nova instância da aplicação consultou o histórico persistido sem novo envio.
+- Erros de entrada, UUID/parâmetros inválidos, evento ausente, conflito de entrega e falha de persistência usam `status`, `code` e `detail`, sem expor exceções técnicas.
+- `DurableHistoryIT` fecha a primeira instância, inicia uma segunda contra o mesmo PostgreSQL/Testcontainers e consulta novamente o banco; cobre sucesso, timestamps UTC, duração e SENDING/STARTED sem reenvio.
+- Comando: `& .\\mvnw.cmd verify`. Resultado observado em 06/10/2026: `BUILD SUCCESS`; 24 testes, 0 falhas e 0 erros, incluindo 2 testes de `DurableHistoryIT` e 1 de `ApiExceptionsTest`.
 
 Preencher, por tarefa: requisito atendido, arquivos alterados, comando executado, resultado observado e limitações. Não marcar concluída apenas por existir código ou por o agente afirmar sucesso.

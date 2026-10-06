@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Testcontainers
@@ -149,6 +150,25 @@ class DeliveryAttemptIT {
         assertThrows(RuntimeException.class, () -> deliver.deliver(eventId));
         assertEquals("SENDING", jdbc.queryForObject("SELECT status FROM events WHERE id = ?", String.class, eventId));
         assertEquals("STARTED", jdbc.queryForObject("SELECT outcome FROM delivery_attempts WHERE event_id = ?", String.class, eventId));
+    }
+
+    @Test
+    void startedAttemptIsVisibleWithNullCompletionFields() throws Exception {
+        UUID eventId = insertEvent(EventStatus.SENDING);
+        UUID attemptId = UUID.randomUUID();
+        Instant started = Instant.parse("2026-10-06T12:00:00Z");
+        jdbc.update("INSERT INTO delivery_attempts (id, event_id, started_at, outcome) VALUES (?, ?, ?, 'STARTED')",
+                attemptId, eventId, Timestamp.from(started));
+
+        mockMvc.perform(get("/events/{id}", eventId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SENDING"))
+                .andExpect(jsonPath("$.attempt.id").value(attemptId.toString()))
+                .andExpect(jsonPath("$.attempt.startedAt").value("2026-10-06T12:00:00Z"))
+                .andExpect(jsonPath("$.attempt.completedAt").doesNotExist())
+                .andExpect(jsonPath("$.attempt.durationMs").doesNotExist())
+                .andExpect(jsonPath("$.attempt.outcome").value("STARTED"))
+                .andExpect(jsonPath("$.attempt.httpStatus").doesNotExist());
     }
 
     private UUID insertEvent(EventStatus status) {

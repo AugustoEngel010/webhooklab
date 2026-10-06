@@ -42,8 +42,8 @@ public class EventController {
     public EventResponse get(@PathVariable String id) {
         UUID uuid;
         try { uuid = UUID.fromString(id); } catch (IllegalArgumentException e) { throw new MalformedUuidException(); }
-        Event event = get.get(uuid).orElseThrow(NotFoundException::new);
-        JsonNode payload = mapper.readTree(event.payloadJson());
-        return EventResponse.from(event, payload);
+        var history = get.get(uuid).orElseThrow(NotFoundException::new);
+        JsonNode payload = mapper.readTree(history.event().payloadJson());
+        return EventResponse.from(history.event(), payload, history.attempt());
     }
 }
