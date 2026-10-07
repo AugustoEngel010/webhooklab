@@ -32,25 +32,25 @@ O projeto permite verificar:
 
 ```text
 Você / Swagger
-       �",  API REST: POST /events
-       �-�
+       |  API REST: POST /events
+       v
 WebhookLab (aplicação Java)
-       �",  salva o evento
-       �-�
+       |  salva o evento
+       v
 PostgreSQL
 
 Você / Swagger
-       �",  API REST: POST /events/{id}/deliver
-       �-�
+       |  API REST: POST /events/{id}/deliver
+       v
 WebhookLab
-       �",  webhook: POST /webhook
-       �-�
+       |  webhook: POST /webhook
+       v
 WireMock (sistema externo simulado)
-       �",  responde 200, 500 ou demora
-       �-�
+       |  responde 200, 500 ou demora
+       v
 WebhookLab
-       �",  salva o resultado
-       �-�
+       |  salva o resultado
+       v
 PostgreSQL
 ```
 
@@ -77,42 +77,42 @@ Na V1, criar o evento não dispara o webhook automaticamente. O envio é solicit
 
 ### WebhookLab
 
-�? a aplicação principal, escrita em Java 21. Ela valida entradas, controla os estados, envia o webhook e registra o resultado.
+É a aplicação principal, escrita em Java 21. Ela valida entradas, controla os estados, envia o webhook e registra o resultado.
 
 ### PostgreSQL
 
-�? o banco persistente. Ele guarda o evento, o payload JSON, a tentativa de entrega, os horários, a duração e o resultado.
+É o banco persistente. Ele guarda o evento, o payload JSON, a tentativa de entrega, os horários, a duração e o resultado.
 
 ### WireMock
 
-�? um servidor HTTP simulado executado em um container Docker. Ele representa o sistema externo que receberia o webhook. Não é o banco e não cria eventos: apenas recebe a chamada e devolve a resposta configurada.
+É um servidor HTTP simulado executado em um container Docker. Ele representa o sistema externo que receberia o webhook. Não é o banco e não cria eventos: apenas recebe a chamada e devolve a resposta configurada.
 
 Por exemplo, um mapping pode dizer:
 
 ```text
-POST /webhook �?' HTTP 200
+POST /webhook -> HTTP 200
 ```
 
 Também é possível configurar `500` ou um atraso de quatro segundos para demonstrar falha e timeout.
 
 ### Swagger UI
 
-�? uma interface visual para executar os endpoints REST no navegador, sem precisar escrever comandos HTTP manualmente.
+É uma interface visual para executar os endpoints REST no navegador, sem precisar escrever comandos HTTP manualmente.
 
 ## Ciclo de vida de um evento
 
 ```text
-PENDING �?' SENDING �?' DELIVERED
-                 �""�?' FAILED
+PENDING -> SENDING -> DELIVERED
+                    \-> FAILED
 ```
 
 Ao iniciar a entrega, a aplicação cria uma única tentativa:
 
 ```text
-STARTED �?' SUCCEEDED
-        �"o�?' HTTP_ERROR
-        �"o�?' TIMEOUT
-        �""�?' CONNECTION_ERROR
+STARTED -> SUCCEEDED
+        \-> HTTP_ERROR
+        \-> TIMEOUT
+        \-> CONNECTION_ERROR
 ```
 
 Na V1, cada evento pode ter somente uma tentativa. Por isso, uma segunda chamada para `/deliver` retorna `409 DELIVERY_CONFLICT` e não gera outro envio.
