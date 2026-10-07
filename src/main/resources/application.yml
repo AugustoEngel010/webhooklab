@@ -17,3 +17,13 @@ server:
 
 delivery:
   target-url: ${DELIVERY_TARGET_URL:http://localhost:8081/webhook}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true

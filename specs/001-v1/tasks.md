@@ -46,7 +46,7 @@ O primeiro marco está concluído quando POST /events e GET /events/{id} funcion
 | T-04 | T-02 | Concluída: RF-04 verificado por 7 testes de integração com PostgreSQL real via Testcontainers |
 | T-05 | T-04 | Concluída: RF-05/RF-06/RF-07 verificados por integração HTTP com WireMock e PostgreSQL real |
 | T-06 | T-03 e T-05 | Concluída: RF-02/RF-08 e erros padronizados verificados por testes HTTP, Testcontainers e reinício da aplicação |
-| T-07 | T-06 | Pendente |
+| T-07 | T-06 | Concluída: Compose completo, Swagger UI e demonstração real pelo README verificados |
 | T-08 | Build disponível; concluir antes da entrega V1 | Pendente |
 
 ## Evidências T-01
@@ -96,3 +96,13 @@ O primeiro marco está concluído quando POST /events e GET /events/{id} funcion
 - Comando: `& .\\mvnw.cmd verify`. Resultado observado em 06/10/2026: `BUILD SUCCESS`; 24 testes, 0 falhas e 0 erros, incluindo 2 testes de `DurableHistoryIT` e 1 de `ApiExceptionsTest`.
 
 Preencher, por tarefa: requisito atendido, arquivos alterados, comando executado, resultado observado e limitações. Não marcar concluída apenas por existir código ou por o agente afirmar sucesso.
+
+## Evidências T-07
+
+- Arquivos alterados: `Dockerfile`, `docker-compose.yml`, `pom.xml`, `application.yml`, `OpenApiConfig`, controllers anotados, `README.md` e `docs/demo.md`.
+- `docker compose config` validou app, PostgreSQL e WireMock, healthchecks, volume `webhooklab-postgres` e `DELIVERY_TARGET_URL=http://wiremock:8080/webhook`.
+- `docker compose up --build -d` construiu a imagem pelo multi-stage Maven/Java 21; `docker compose ps` observou os três serviços `healthy`.
+- Readiness retornou `UP`; OpenAPI 3.1 e Swagger UI responderam; WireMock Admin retornou `healthy`.
+- Demonstração real: PENDING; 200→`DELIVERED/SUCCEEDED`; 500→`FAILED/HTTP_ERROR/500`; atraso 4000 ms→`FAILED/TIMEOUT`, `durationMs=3001` e status HTTP nulo; repetição 409 sem aumento de requests (6 antes/depois); restart apenas de app preservou `DELIVERED/SUCCEEDED`.
+- `& .\\mvnw.cmd verify` com acesso ao Docker: `BUILD SUCCESS`; 24 testes, 0 falhas e 0 erros.
+- Confirmação do usuário em 07/10/2026: a execução local seguindo o README funcionou.

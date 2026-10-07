@@ -26,3 +26,7 @@ Registrar observações concretas durante as tarefas.
 
 Manter notas curtas. Registrar erros detectados, decisões e o que foi necessário explicar à IA; não fabricar ganho de produtividade ou saída de testes.
 | 2026-10-05 | T-03 | Contrato de resposta da paginaÃ§Ã£o nÃ£o estava detalhado na V1 | Documentar envelope `content`, `page`, `size`, `totalElements` e `totalPages`; manter `attempt` ausente na listagem e executar `COUNT`/`LIMIT`/`OFFSET` no PostgreSQL | `& .\\mvnw.cmd verify`: 9 testes Failsafe passaram, incluindo 8 em `EventApiIT` |
+| 2026-10-06 | T-07 | Compose aguardava o WireMock porque o healthcheck não usava a rota real da imagem | Usar `curl --fail http://localhost:8080/__admin/health` e validar o endpoint antes de iniciar a aplicação | `docker compose up --build -d`: os três serviços ficaram `healthy`; demonstração concluída |
+| 2026-10-06 | T-07 | O build da stack não pode pressupor JDK/Maven no computador | Compilar no estágio `maven:3.9.11-eclipse-temurin-21` e copiar o JAR para runtime Java 21 | Build Docker observado com sucesso |
+| 2026-10-06 | T-07 | O primeiro verify não acessou o pipe Docker no sandbox | Repetir com acesso autorizado ao daemon e registrar a limitação | Execução autorizada: `BUILD SUCCESS`, 24 testes, 0 falhas e 0 erros |
+| 2026-10-07 | T-07 | Era necessário confirmar a usabilidade por uma segunda execução | Registrar separadamente a validação feita pelo usuário, sem atribuir comandos não informados | Usuário confirmou que a execução seguindo o README funcionou |

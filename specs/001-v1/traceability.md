@@ -39,3 +39,19 @@ Após executar, substituir Pendente pelo caminho e classe/método reais do teste
 | RF-03 | Duas pÃ¡ginas sem repetiÃ§Ã£o e desempate por ID com mesmo createdAt | `src/test/java/dev/augusto/webhooklab/EventApiIT.java:listsDistinctPagesInStableOrder` | `& .\\mvnw.cmd verify` | BUILD SUCCESS; PostgreSQL/Testcontainers confirmou ordem e IDs distintos entre pÃ¡ginas |
 | RF-03 | Banco vazio e pÃ¡gina alÃ©m dos resultados retornam content vazio; size=100 aceito | `src/test/java/dev/augusto/webhooklab/EventApiIT.java:returnsEmptyPageAndAcceptsMaximumSize` | `& .\\mvnw.cmd verify` | BUILD SUCCESS; respostas HTTP 200 confirmadas |
 | RF-03 | page negativo, size 0/negativo/101 e page/size nÃ£o numÃ©ricos | `src/test/java/dev/augusto/webhooklab/EventApiIT.java:rejectsInvalidPaginationParameters` | `& .\\mvnw.cmd verify` | BUILD SUCCESS; todos os seis casos retornaram HTTP 400 |
+
+## T-07 — Compose, Swagger e demonstração
+
+| Requisito | Cenário | Teste/verificação | Comando | Resultado observado |
+| --- | --- | --- | --- | --- |
+| T-07 | Stack completa e build sem Java/Maven no host | Dockerfile multi-stage e Compose | `docker compose up --build -d`; `docker compose ps` | Imagem construída com Maven/Java 21; app, PostgreSQL e WireMock `healthy`; volume persistente ativo |
+| T-07 | Prontidão e conectividade | Actuator, healthchecks e WireMock Admin | `docker compose config`; readiness; WireMock health | `DELIVERY_TARGET_URL` interno `http://wiremock:8080/webhook`; app `UP`; WireMock `healthy` |
+| T-07 | Swagger UI e contrato OpenAPI | Springdoc em execução | GET `/v3/api-docs`; GET `/swagger-ui/index.html` | OpenAPI 3.1 servido; Swagger retornou HTTP 200 |
+| RF-01/RF-02/RF-03 | Registro PENDING, consulta e paginação | Demonstração manual em `docs/demo.md` | POST `/events`; GET `/events/{id}`; GET `/events?page=0&size=20` | Evento novo PENDING e envelope paginado consultados |
+| RF-05 | WireMock 200 | Demonstração manual | mapping 200 + POST `/events/{id}/deliver` + GET | HTTP 201; `DELIVERED/SUCCEEDED` |
+| RF-06 | WireMock 500 | Demonstração manual | mapping 500 + POST `/events/{id}/deliver` + GET | HTTP 201; `FAILED/HTTP_ERROR`; `httpStatus=500` |
+| RF-07 | WireMock atrasado | Demonstração manual | mapping 200/4000 ms + POST `/events/{id}/deliver` + GET | HTTP 201; `FAILED/TIMEOUT`; `durationMs=3001`; `httpStatus=null` |
+| RF-04 | Repetição sem novo envio | Demonstração manual e contagem WireMock | segundo POST `/events/{id}/deliver`; GET `/__admin/requests` | HTTP 409; requests ficaram 6 antes/depois |
+| RF-08 | Reinício somente da aplicação | Compose e consulta HTTP | `docker compose restart app`; GET `/events/{id}` | `DELIVERED/SUCCEEDED` e histórico permaneceram persistidos |
+| T-08/regressão | Testes unitários e integração | `*Test` e `*IT` | `& .\\mvnw.cmd verify` | `BUILD SUCCESS`; 24 testes, 0 falhas e 0 erros |
+| T-07 | Execução por outra pessoa seguindo o README | Confirmação manual do usuário | 07/10/2026: execução local conforme `README.md` e `docs/demo.md` | Usuário confirmou que funcionou |
