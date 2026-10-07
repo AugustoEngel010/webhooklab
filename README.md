@@ -10,6 +10,10 @@ Ele registra um evento JSON, salva esse evento no PostgreSQL e, quando solicitad
 
 Este projeto foi desenvolvido com **Spec-Driven Development (SDD)**: os requisitos e decisões de design foram definidos antes da implementação, cada entrega foi dividida em tarefas e os critérios de aceite foram relacionados aos testes e às evidências em `specs/001-v1/`.
 
+Para entender ou apresentar esse processo, consulte [docs/sdd.md](docs/sdd.md). Ele explica como uma ideia vira requisito, tarefa, código, teste e evidência neste projeto.
+
+O processo também é apoiado pelo contexto do agente e pela skill local [`webhooklab-sdd`](.agents/skills/webhooklab-sdd/SKILL.md), criada manualmente para este repositório.
+
 ## O problema que o projeto demonstra
 
 Imagine uma loja que acabou de criar um pedido. Ela precisa avisar outro sistema:

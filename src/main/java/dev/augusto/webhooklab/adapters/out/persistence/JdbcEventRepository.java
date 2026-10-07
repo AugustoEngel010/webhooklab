@@ -45,11 +45,21 @@ public final class JdbcEventRepository implements EventRepository {
     public EventPage findPage(int page, int size) {
         long total = jdbc.queryForObject("SELECT count(*) FROM events", Long.class);
         long offset = (long) page * size;
-        var events = jdbc.query("SELECT id, event_type, payload::text, status, created_at " +
-                        "FROM events ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?",
-                (rs, rowNum) -> new Event(rs.getObject("id", UUID.class), rs.getString("event_type"),
-                        rs.getString("payload"), EventStatus.valueOf(rs.getString("status")),
-                        rs.getTimestamp("created_at").toInstant()), size, offset);
-        return new EventPage(events, page, size, total);
+        var history = jdbc.query("SELECT e.id, e.event_type, e.payload::text, e.status, e.created_at, " +
+                        "a.id AS attempt_id, a.started_at, a.completed_at, a.duration_ms, a.outcome, a.http_status " +
+                        "FROM events e LEFT JOIN delivery_attempts a ON a.event_id = e.id " +
+                        "ORDER BY e.created_at DESC, e.id DESC LIMIT ? OFFSET ?",
+                (rs, rowNum) -> {
+                    Event event = new Event(rs.getObject("id", UUID.class), rs.getString("event_type"),
+                            rs.getString("payload"), EventStatus.valueOf(rs.getString("status")),
+                            rs.getTimestamp("created_at").toInstant());
+                    DeliveryAttempt attempt = rs.getObject("attempt_id") == null ? null : new DeliveryAttempt(
+                            rs.getObject("attempt_id", UUID.class), event.id(), rs.getTimestamp("started_at").toInstant(),
+                            rs.getTimestamp("completed_at") == null ? null : rs.getTimestamp("completed_at").toInstant(),
+                            rs.getObject("duration_ms", Long.class), DeliveryAttemptStatus.valueOf(rs.getString("outcome")),
+                            (Integer) rs.getObject("http_status"));
+                    return new EventHistory(event, attempt);
+                }, size, offset);
+        return new EventPage(history, page, size, total);
     }
 }

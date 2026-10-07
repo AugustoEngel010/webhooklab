@@ -55,3 +55,4 @@ Após executar, substituir Pendente pelo caminho e classe/método reais do teste
 | RF-08 | Reinício somente da aplicação | Compose e consulta HTTP | `docker compose restart app`; GET `/events/{id}` | `DELIVERED/SUCCEEDED` e histórico permaneceram persistidos |
 | T-08/regressão | Testes unitários e integração | `*Test` e `*IT` | `& .\\mvnw.cmd verify` | `BUILD SUCCESS`; 24 testes, 0 falhas e 0 erros |
 | T-07 | Execução por outra pessoa seguindo o README | Confirmação manual do usuário | 07/10/2026: execução local conforme `README.md` e `docs/demo.md` | Usuário confirmou que funcionou |
+| RF-02/RF-03 | Listagem retorna a tentativa persistida quando existente | `src/test/java/dev/augusto/webhooklab/EventApiIT.java:listsPersistedAttemptWithEvent` | `& .\\mvnw.cmd -q '-Dtest=EventApiIT' test` | BUILD SUCCESS; 9 testes, 0 falhas e 0 erros; `attempt.id`, `SUCCEEDED`, `httpStatus=200` e `durationMs=100` confirmados |

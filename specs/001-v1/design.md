@@ -63,4 +63,4 @@ Pacote base: `dev.augusto.webhooklab`.
 Criar classes e subpacotes quando a tarefa exigir. O scaffold não contém implementação.
 ### Listagem paginada
 
-`ListEvents` retorna uma pagina com os eventos e os metadados `page`, `size`, `totalElements` e `totalPages`. O adapter JDBC executa a ordenacao `created_at DESC, id DESC`, um `COUNT(*)` e a busca com `LIMIT/OFFSET` no PostgreSQL.
+`ListEvents` retorna uma pagina com os eventos, suas tentativas quando existentes, e os metadados `page`, `size`, `totalElements` e `totalPages`. O adapter JDBC executa a ordenacao `created_at DESC, id DESC`, um `COUNT(*)` e a busca com `LEFT JOIN`, `LIMIT/OFFSET` no PostgreSQL.

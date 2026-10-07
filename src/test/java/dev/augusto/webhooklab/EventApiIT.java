@@ -41,6 +41,7 @@ class EventApiIT {
 
     @BeforeEach
     void cleanEvents() {
+        jdbc.update("DELETE FROM delivery_attempts");
         jdbc.update("DELETE FROM events");
     }
 
@@ -133,6 +134,26 @@ class EventApiIT {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)))
                 .andExpect(jsonPath("$.content[0].id").value("00000000-0000-0000-0000-000000000001"));
+    }
+
+    @Test
+    void listsPersistedAttemptWithEvent() throws Exception {
+        var eventId = java.util.UUID.randomUUID();
+        var attemptId = java.util.UUID.randomUUID();
+        var createdAt = java.time.Instant.parse("2026-01-03T00:00:00Z");
+        jdbc.update("INSERT INTO events (id, event_type, payload, status, created_at) VALUES (?, 'LISTED', '{}'::jsonb, 'DELIVERED', ?)",
+                eventId, java.sql.Timestamp.from(createdAt));
+        jdbc.update("INSERT INTO delivery_attempts (id, event_id, started_at, completed_at, duration_ms, outcome, http_status) " +
+                        "VALUES (?, ?, ?, ?, ?, 'SUCCEEDED', ?)", attemptId, eventId,
+                java.sql.Timestamp.from(createdAt.plusSeconds(1)), java.sql.Timestamp.from(createdAt.plusSeconds(2)), 100L, 200);
+
+        mockMvc.perform(get("/events").param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(eventId.toString()))
+                .andExpect(jsonPath("$.content[0].attempt.id").value(attemptId.toString()))
+                .andExpect(jsonPath("$.content[0].attempt.outcome").value("SUCCEEDED"))
+                .andExpect(jsonPath("$.content[0].attempt.httpStatus").value(200))
+                .andExpect(jsonPath("$.content[0].attempt.durationMs").value(100));
     }
 
     @Test
