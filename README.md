@@ -1,5 +1,22 @@
 # WebhookLab
 
+## VerificaÃ§Ã£o do build
+
+O build separa testes unitÃ¡rios `*Test` (Surefire) de testes de integraÃ§Ã£o `*IT` (Failsafe). `verify` executa a formataÃ§Ã£o, a suÃ­te unitÃ¡ria e a suÃ­te de integraÃ§Ã£o; os testes de integraÃ§Ã£o precisam de Docker acessÃ­vel para PostgreSQL via Testcontainers e WireMock.
+
+```powershell
+& .\mvnw.cmd -B verify
+```
+
+Para verificar ou corrigir a formataÃ§Ã£o Java:
+
+```powershell
+& .\mvnw.cmd spotless:check
+& .\mvnw.cmd spotless:apply
+```
+
+O Maven falha se a suÃ­te unitÃ¡ria ou de integraÃ§Ã£o nÃ£o descobrir testes. NÃ£o use `-DskipTests`, `-DskipITs` ou propriedades `spotless.*.skip` ao validar a V1. O workflow [`ci.yml`](.github/workflows/ci.yml) repete `./mvnw -B verify` em pull requests e pushes para `main`, com Java 21, cache Maven e relatÃ³rios Surefire/Failsafe mesmo quando o job falha.
+
 O WebhookLab é um laboratório local para entender e testar a entrega de webhooks.
 
 Ele registra um evento JSON, salva esse evento no PostgreSQL e, quando solicitado, envia uma notificação HTTP para um sistema externo simulado pelo WireMock. Depois, salva o resultado da tentativa e permite consultar o histórico.

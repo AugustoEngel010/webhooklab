@@ -13,3 +13,5 @@ Separar registro do evento e entrega. Executar uma tentativa síncrona por event
 ## Consequências
 
 O primeiro marco pode verificar persistência antes da integração HTTP. A entrega responde após o resultado ou timeout. Agendamento e retentativas automáticas precisam de nova spec.
+
+Na T-08, `verify` continua sendo a verificação reproduzível da entrega; os testes `*IT` exercitam PostgreSQL e WireMock sem alterar esta decisão.

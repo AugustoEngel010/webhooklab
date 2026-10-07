@@ -13,3 +13,5 @@ Manter modelos e regras em domain sem Spring, JPA, Jackson ou HTTP. Definir port
 ## Consequências
 
 DTOs, entidades JPA e modelos de domínio são separados. A configuração liga as implementações concretas.
+
+Na T-08, a formatação é aplicada ao código Java sem introduzir dependências de framework no domínio; a separação permanece coberta pelo layout real de `src/main/java`.

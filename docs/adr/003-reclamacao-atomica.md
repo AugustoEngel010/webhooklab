@@ -13,3 +13,5 @@ Reclamar o evento, transicionar para SENDING e criar a tentativa STARTED na mesm
 ## Consequências
 
 Validar concorrência em PostgreSQL real. Uma interrupção pode manter SENDING/STARTED e resultado externo desconhecido; preservar esse histórico sem reenvio automático na V1.
+
+Na T-08, o workflow executa os testes de concorrência com Docker acessível e falha se a suíte de integração não for descoberta.

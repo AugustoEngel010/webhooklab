@@ -3,7 +3,7 @@
 ## Contexto
 
 - Mini projeto backend Java 21, local e publicável no GitHub.
-- Arquitetura hexagonal em um único projeto Maven; pacote base dev.augusto.webhooklab.
+- Arquitetura hexagonal em um único projeto Maven; pacote base dev.webhooklab.
 - Fonte de requisitos: specs/001-v1/requirements.md.
 - Estado inicial: diretórios e documentos; bootstrap Java e testes pendentes.
 

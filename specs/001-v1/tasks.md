@@ -106,3 +106,8 @@ Preencher, por tarefa: requisito atendido, arquivos alterados, comando executado
 - Demonstração real: PENDING; 200→`DELIVERED/SUCCEEDED`; 500→`FAILED/HTTP_ERROR/500`; atraso 4000 ms→`FAILED/TIMEOUT`, `durationMs=3001` e status HTTP nulo; repetição 409 sem aumento de requests (6 antes/depois); restart apenas de app preservou `DELIVERED/SUCCEEDED`.
 - `& .\\mvnw.cmd verify` com acesso ao Docker: `BUILD SUCCESS`; 24 testes, 0 falhas e 0 erros.
 - Confirmação do usuário em 07/10/2026: a execução local seguindo o README funcionou.
+# T-08 — fechamento local
+
+Este status atualiza a linha histórica de T-08 acima: os critérios locais foram concluídos; resta observar uma execução no GitHub Actions.
+
+Implementada localmente com Surefire/Failsafe estritos, Spotless no `verify`, workflow GitHub Actions, documentação e rastreabilidade revisadas. A execução remota do workflow ainda não foi observada; a validação da V1 permanece pendente até essa evidência.

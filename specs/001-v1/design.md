@@ -50,7 +50,7 @@ ADRs iniciais:
 
 ## Convenções de diretórios
 
-Pacote base: `dev.augusto.webhooklab`.
+Pacote base: `dev.webhooklab`.
 
 - `domain/`: modelos e regras.
 - `application/port/in/` e `application/port/out/`: portas necessárias aos casos de uso.
