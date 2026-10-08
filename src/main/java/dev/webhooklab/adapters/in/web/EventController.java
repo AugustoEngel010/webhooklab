@@ -1,8 +1,6 @@
 package dev.webhooklab.adapters.in.web;
 
-import dev.webhooklab.application.port.in.GetEventUseCase;
-import dev.webhooklab.application.port.in.ListEventsUseCase;
-import dev.webhooklab.application.port.in.RegisterEventUseCase;
+import dev.webhooklab.application.usecase.EventService;
 import dev.webhooklab.domain.Event;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,19 +19,11 @@ import tools.jackson.databind.ObjectMapper;
 @RequestMapping("/events")
 @Tag(name = "Events", description = "Registro, consulta e paginação de eventos")
 public class EventController {
-  private final RegisterEventUseCase register;
-  private final GetEventUseCase get;
-  private final ListEventsUseCase list;
+  private final EventService events;
   private final ObjectMapper mapper;
 
-  public EventController(
-      RegisterEventUseCase register,
-      GetEventUseCase get,
-      ListEventsUseCase list,
-      ObjectMapper mapper) {
-    this.register = register;
-    this.get = get;
-    this.list = list;
+  public EventController(EventService events, ObjectMapper mapper) {
+    this.events = events;
     this.mapper = mapper;
   }
 
@@ -62,7 +52,7 @@ public class EventController {
       throw new IllegalArgumentException("eventType and an object payload are required");
     }
     Event event =
-        register.register(request.eventType(), mapper.writeValueAsString(request.payload()));
+        events.register(request.eventType(), mapper.writeValueAsString(request.payload()));
     return ResponseEntity.created(URI.create("/events/" + event.id()))
         .body(EventResponse.from(event, request.payload()));
   }
@@ -78,7 +68,7 @@ public class EventController {
       @Parameter(description = "Itens por página, de 1 a 100", example = "20")
           @RequestParam(defaultValue = "20")
           int size) {
-    return EventPageResponse.from(list.list(page, size), mapper);
+    return EventPageResponse.from(events.list(page, size), mapper);
   }
 
   @GetMapping("/{id}")
@@ -97,7 +87,7 @@ public class EventController {
     } catch (IllegalArgumentException e) {
       throw new MalformedUuidException();
     }
-    var history = get.get(uuid).orElseThrow(NotFoundException::new);
+    var history = events.get(uuid).orElseThrow(NotFoundException::new);
     JsonNode payload = mapper.readTree(history.event().payloadJson());
     return EventResponse.from(history.event(), payload, history.attempt());
   }

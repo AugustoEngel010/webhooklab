@@ -96,4 +96,4 @@ Invoke-RestMethod "$api/events/$event200"|ConvertTo-Json -Depth 10
 
 Para timeout no PowerShell: `Clear-Mappings; Set-Response 200 4000`, crie outro evento e invoque `POST /deliver`. Para parar sem apagar dados use `docker compose down`; retome com `docker compose up --build -d`. `docker compose down -v` apaga o volume.
 
-Este roteiro demonstra um evento `ORDER_CREATED` concreto: ele e persistido como `PENDING`, enviado manualmente ao WireMock e depois consultado como `DELIVERED`, `HTTP_ERROR` ou `TIMEOUT`. Para a verificacao automatizada, execute `& .\mvnw.cmd -B verify` na raiz; o comando inclui `spotless:check`, Surefire e Failsafe e exige Docker para PostgreSQL/WireMock.
+Este roteiro demonstra um evento `ORDER_CREATED` concreto: ele e persistido como `PENDING`, enviado manualmente ao WireMock e depois consultado como `DELIVERED`, `HTTP_ERROR` ou `TIMEOUT`. Para a verificacao automatizada, execute `docker compose --profile tools run --rm verify`; o comando inclui Spotless, Surefire e Failsafe e exige acesso ao Docker Engine para Testcontainers.

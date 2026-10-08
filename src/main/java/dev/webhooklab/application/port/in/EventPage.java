@@ -1,6 +1,6 @@
 package dev.webhooklab.application.port.in;
 
-import dev.webhooklab.application.port.in.GetEventUseCase.EventHistory;
+import dev.webhooklab.application.usecase.EventService.EventHistory;
 import java.util.List;
 
 public record EventPage(List<EventHistory> content, int page, int size, long totalElements) {

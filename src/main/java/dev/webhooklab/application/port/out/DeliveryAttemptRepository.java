@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 public interface DeliveryAttemptRepository {
-  DeliveryClaim start(UUID eventId, Instant startedAt);
+  DeliveryClaim claimForDelivery(UUID eventId, Instant startedAt);
 
   DeliveryClaim complete(DeliveryClaim claim, EventStatus eventStatus, DeliveryAttempt attempt);
 

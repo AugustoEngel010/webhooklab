@@ -27,13 +27,14 @@
 
 ## Verificação e evidência
 
-- Conferir pom.xml e comandos disponíveis antes de executá-los.
+- Conferir pom.xml e os comandos Docker disponíveis antes de executá-los; Maven deve rodar em container.
 - Configurar testes unitários *Test e testes de integração *IT na etapa apropriada.
 - Testar persistência e migrations com PostgreSQL real via Testcontainers.
 - Usar WireMock para os cenários HTTP da entrega.
 - Registrar em traceability.md o teste, o comando e o resultado observado.
 - Manter a tarefa pendente ou em andamento se a verificação estiver bloqueada.
 - Não declarar comandos executados, testes aprovados ou aplicação funcional sem evidência.
+- O Maven Wrapper foi removido na T-09; o build e a verificação devem continuar sendo executados via Docker.
 
 ## Code Review Rules
 

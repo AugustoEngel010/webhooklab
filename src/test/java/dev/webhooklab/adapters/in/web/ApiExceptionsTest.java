@@ -4,9 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import dev.webhooklab.application.port.in.GetEventUseCase;
-import dev.webhooklab.application.port.in.ListEventsUseCase;
-import dev.webhooklab.application.port.in.RegisterEventUseCase;
+import dev.webhooklab.application.port.in.EventPage;
+import dev.webhooklab.application.port.out.EventRepository;
+import dev.webhooklab.application.usecase.EventService;
+import dev.webhooklab.domain.Event;
+import java.time.Clock;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -17,16 +20,22 @@ import tools.jackson.databind.json.JsonMapper;
 class ApiExceptionsTest {
   @Test
   void persistenceFailureUsesPublic503ContractWithoutTechnicalDetail() throws Exception {
-    GetEventUseCase get =
-        id -> {
-          throw new DataAccessResourceFailureException("jdbc password must not leak");
+    EventRepository repository =
+        new EventRepository() {
+          public Event save(Event event) {
+            return event;
+          }
+
+          public Optional<EventService.EventHistory> findById(UUID id) {
+            throw new DataAccessResourceFailureException("jdbc password must not leak");
+          }
+
+          public EventPage findPage(int page, int size) {
+            return null;
+          }
         };
-    EventController controller =
-        new EventController(
-            (RegisterEventUseCase) (type, payload) -> null,
-            get,
-            (ListEventsUseCase) (page, size) -> null,
-            new JsonMapper());
+    EventService events = new EventService(repository, payload -> true, Clock.systemUTC());
+    EventController controller = new EventController(events, new JsonMapper());
     MockMvc mvc =
         MockMvcBuilders.standaloneSetup(controller)
             .setControllerAdvice(new ApiExceptions())

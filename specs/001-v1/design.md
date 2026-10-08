@@ -64,3 +64,21 @@ Criar classes e subpacotes quando a tarefa exigir. O scaffold não contém imple
 ### Listagem paginada
 
 `ListEvents` retorna uma pagina com os eventos, suas tentativas quando existentes, e os metadados `page`, `size`, `totalElements` e `totalPages`. O adapter JDBC executa a ordenacao `created_at DESC, id DESC`, um `COUNT(*)` e a busca com `LEFT JOIN`, `LIMIT/OFFSET` no PostgreSQL.
+
+### T-09 — simplificação e verificação containerizada
+
+`EventService` concentra registro, consulta e listagem; `DeliverEventService`
+continua isolado para a entrega. As portas de saída `EventRepository`,
+`DeliveryAttemptRepository`, `DeliverySender` e `PayloadValidator` permanecem
+porque representam dependências externas reais.
+
+No JDBC, `JdbcEventSql` e `JdbcDeliverySql` contêm as instruções, enquanto
+`JdbcEventMapper` converte o evento e a tentativa para leituras por ID e página.
+O claim é `claimForDelivery`: uma transação atualiza somente `PENDING`, cria
+`STARTED` e lê o evento; o HTTP ocorre depois do commit. A conclusão atualiza
+evento e tentativa em outra transação.
+
+O Dockerfile usa `maven:3.9.11-eclipse-temurin-21` no builder e
+`eclipse-temurin:21-jre-jammy` no runtime. O serviço `verify` do profile `tools`
+executa `mvn verify`, monta `target/` e o socket do Docker para Testcontainers.
+O Maven Wrapper não faz mais parte do repositório.

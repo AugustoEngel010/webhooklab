@@ -119,17 +119,16 @@ O `201` retornado por `/deliver` significa que a tentativa foi registrada. O res
 O build separa testes unitários `*Test` (Surefire) de testes de integração `*IT` (Failsafe). `verify` executa a formatação, a suíte unitária e a suíte de integração; os testes de integração precisam de Docker acessível para PostgreSQL via Testcontainers e WireMock.
 
 ```powershell
-& .\mvnw.cmd -B verify
+docker compose --profile tools run --rm verify
 ```
 
 Para verificar ou corrigir a formatação Java:
 
 ```powershell
-& .\mvnw.cmd spotless:check
-& .\mvnw.cmd spotless:apply
+docker compose --profile tools run --rm verify
 ```
 
-O Maven falha se a suíte unitária ou de integração não descobrir testes. Não use `-DskipTests`, `-DskipITs` ou propriedades `spotless.*.skip` ao validar a V1. O workflow [`ci.yml`](.github/workflows/ci.yml) repete `./mvnw -B verify` em pull requests e pushes para `main`, com Java 21, cache Maven e relatórios Surefire/Failsafe mesmo quando o job falha.
+O Maven falha se a suíte unitária ou de integração não descobrir testes. Não use `-DskipTests`, `-DskipITs` ou propriedades `spotless.*.skip` ao validar a V1. O serviço `verify` executa `mvn -B verify` em imagem oficial Maven/JDK 21, com acesso ao Docker Engine e `target/` montado para relatórios. O workflow [`ci.yml`](.github/workflows/ci.yml) repete esse comando em pull requests e pushes para `main`.
 
 O WebhookLab é um laboratório local para entender e testar a entrega de webhooks.
 
@@ -150,7 +149,7 @@ O processo também é apoiado pelo contexto do agente e pela skill local [`webho
 
 - Docker Desktop 29+ (ou Docker Engine com Compose v2).
 - Java e Maven não são necessários para executar a stack: o Dockerfile compila com Maven e Java 21 dentro da imagem.
-- Para executar `mvnw verify` diretamente no computador, use JDK 21.
+- Para a verificação use o serviço Docker `verify`; Maven e JDK não precisam estar instalados no computador.
 
 ## Iniciar o ambiente
 
@@ -319,4 +318,4 @@ docker compose down -v
 - Entrega: manual, síncrona e com uma tentativa por evento na V1.
 - Testes: JUnit, Spring Boot Test, Testcontainers e WireMock.
 
-Requisitos, decisões e rastreabilidade ficam em `specs/001-v1/`. O build local completo é `./mvnw verify` ou `./mvnw.cmd verify`.
+Requisitos, decisões e rastreabilidade ficam em `specs/001-v1/`. O build completo é `docker compose --profile tools run --rm verify`.

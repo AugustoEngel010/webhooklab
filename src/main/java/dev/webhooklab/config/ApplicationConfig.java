@@ -2,17 +2,12 @@ package dev.webhooklab.config;
 
 import dev.webhooklab.adapters.out.http.HttpDeliverySender;
 import dev.webhooklab.application.port.in.DeliverEventUseCase;
-import dev.webhooklab.application.port.in.GetEventUseCase;
-import dev.webhooklab.application.port.in.ListEventsUseCase;
-import dev.webhooklab.application.port.in.RegisterEventUseCase;
 import dev.webhooklab.application.port.out.DeliveryAttemptRepository;
 import dev.webhooklab.application.port.out.DeliverySender;
 import dev.webhooklab.application.port.out.EventRepository;
 import dev.webhooklab.application.port.out.PayloadValidator;
 import dev.webhooklab.application.usecase.DeliverEventService;
-import dev.webhooklab.application.usecase.GetEventService;
-import dev.webhooklab.application.usecase.ListEventsService;
-import dev.webhooklab.application.usecase.RegisterEventService;
+import dev.webhooklab.application.usecase.EventService;
 import java.net.http.HttpClient;
 import java.time.Clock;
 import java.time.Duration;
@@ -59,19 +54,8 @@ public class ApplicationConfig {
   }
 
   @Bean
-  RegisterEventUseCase registerEventUseCase(
-      EventRepository repo, PayloadValidator validator, Clock clock) {
-    return new RegisterEventService(repo, validator, clock);
-  }
-
-  @Bean
-  GetEventUseCase getEventUseCase(EventRepository repo) {
-    return new GetEventService(repo);
-  }
-
-  @Bean
-  ListEventsUseCase listEventsUseCase(EventRepository repo) {
-    return new ListEventsService(repo);
+  EventService eventService(EventRepository repo, PayloadValidator validator, Clock clock) {
+    return new EventService(repo, validator, clock);
   }
 
   @Bean

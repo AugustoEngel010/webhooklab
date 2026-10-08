@@ -2,7 +2,7 @@ package dev.webhooklab;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import dev.webhooklab.application.port.in.GetEventUseCase;
+import dev.webhooklab.application.usecase.EventService;
 import dev.webhooklab.domain.DeliveryAttemptStatus;
 import dev.webhooklab.domain.EventStatus;
 import java.sql.Timestamp;
@@ -58,7 +58,7 @@ class DurableHistoryIT {
     }
 
     try (ConfigurableApplicationContext second = application()) {
-      var history = second.getBean(GetEventUseCase.class).get(eventId).orElseThrow();
+      var history = second.getBean(EventService.class).get(eventId).orElseThrow();
       assertEquals(eventId, history.event().id());
       assertEquals(EventStatus.DELIVERED, history.event().status());
       assertEquals("{\"orderId\": \"A-1\"}", history.event().payloadJson());
@@ -91,7 +91,7 @@ class DurableHistoryIT {
     }
 
     try (ConfigurableApplicationContext second = application()) {
-      var history = second.getBean(GetEventUseCase.class).get(eventId).orElseThrow();
+      var history = second.getBean(EventService.class).get(eventId).orElseThrow();
       assertEquals(EventStatus.SENDING, history.event().status());
       assertEquals(attemptId, history.attempt().id());
       assertEquals(DeliveryAttemptStatus.STARTED, history.attempt().outcome());

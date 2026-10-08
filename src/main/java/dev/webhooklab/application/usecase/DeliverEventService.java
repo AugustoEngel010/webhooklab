@@ -25,7 +25,7 @@ public final class DeliverEventService implements DeliverEventUseCase {
 
   @Override
   public DeliveryClaim deliver(UUID eventId) {
-    DeliveryClaim claim = attempts.start(eventId, clock.instant());
+    DeliveryClaim claim = attempts.claimForDelivery(eventId, clock.instant());
     long startedNanos = System.nanoTime();
     DeliverySender.DeliveryResult result = sender.send(claim.event(), claim.attempt());
     Instant completedAt = clock.instant();

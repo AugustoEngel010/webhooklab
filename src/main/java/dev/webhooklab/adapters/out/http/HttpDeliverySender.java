@@ -14,7 +14,6 @@ import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.ObjectNode;
 
 public final class HttpDeliverySender implements DeliverySender {
   private final HttpClient client;
@@ -31,11 +30,12 @@ public final class HttpDeliverySender implements DeliverySender {
   @Override
   public DeliveryResult send(Event event, DeliveryAttempt attempt) {
     try {
-      ObjectNode envelope = mapper.createObjectNode();
-      envelope.put("id", event.id().toString());
-      envelope.put("eventType", event.eventType());
-      envelope.put("createdAt", event.createdAt().toString());
-      envelope.set("payload", mapper.readTree(event.payloadJson()));
+      var envelope =
+          new WebhookEnvelope(
+              event.id(),
+              event.eventType(),
+              event.createdAt(),
+              mapper.readTree(event.payloadJson()));
       HttpRequest request =
           HttpRequest.newBuilder(target)
               .timeout(Duration.ofSeconds(3))

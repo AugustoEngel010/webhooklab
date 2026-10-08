@@ -74,3 +74,18 @@ Os testes abaixo distinguem implementação (caminhos reais), execução local (
 | T-08 | Unidade e integração não podem ficar silenciosamente vazias | `pom.xml` (`maven-surefire-plugin`/`maven-failsafe-plugin`, `failIfNoTests=true`) | `& .\\mvnw.cmd -B verify` | Implementado; execução local anterior à mudança observou 1 unitário e 25 integração. Repetir após a mudança é obrigatório. |
 | T-08 | Formatação Java verificada no build | `pom.xml` (`spotless-maven-plugin`) | `& .\\mvnw.cmd spotless:check` | Implementado; resultado pós-mudança pendente nesta revisão |
 | T-08 | CI com Java 21, wrapper, cache, Docker e relatórios | `.github/workflows/ci.yml` | Execução no GitHub Actions | Pendente: não há URL nem run remoto observado nesta entrega |
+## T-09 — verificação local observada
+
+| Critério | Evidência | Comando | Resultado observado |
+| --- | --- | --- | --- |
+| REF-01 | SQL e mapper JDBC separados; conversão de Event reutilizada; LEFT JOIN, Optional.empty e nulos preservados | `docker compose --profile tools run --rm verify` | Failsafe concluiu com 25 testes, 0 falhas e 0 erros |
+| REF-02 | `claimForDelivery`, claim condicional, STARTED atômico, rollback, HTTP fora da transação e conclusão atômica | `docker compose --profile tools run --rm verify` | DeliveryAttemptIT 8/8 e DeliveryHttpIT 5/5 passaram com PostgreSQL/Testcontainers |
+| REF-03 | Exceções próprias em arquivos separados e imports explícitos | `docker compose --profile tools run --rm verify` | ApiExceptionsTest 1/1 passou; contrato público preservado |
+| REF-04 | WebhookEnvelope com id/eventType/createdAt/payload e header X-Webhook-Event-Id | `docker compose --profile tools run --rm verify` | Cenários WireMock passaram |
+| REF-05 | EventService concreto para register/get/list; DeliverEventService separado | `docker compose --profile tools run --rm verify` | EventApiIT 9/9 e suite completa passaram |
+| REF-06 | Dockerfile Maven 3.9.11/JDK 21 + JRE 21, Wrapper removido, verify com socket Docker e CI via Docker | `docker compose --profile tools config`; `docker compose build --no-cache app`; `docker compose --profile tools run --rm verify` | Configuração válida; imagem reconstruída; Surefire 1/1, Failsafe 25/25, Spotless limpo, BUILD SUCCESS; relatórios em target/ |
+| REF-07 | Design, ADR, AGENTS, README, docs, tasks e traceability atualizados | `git diff --check`; `rg --files -g 'mvnw*' -g '.mvn/wrapper/**'` | Sem erro de whitespace; nenhum Wrapper presente; workflow remoto T-08 não observado |
+
+Smoke test Compose observado: readiness 200; registro do evento `8159216f-6a95-4188-8c0c-4145820b4ec0`; primeira entrega 201; segundo disparo 409.
+
+Verificação inicial registrada antes da implementação: `docker version` observou Docker Server 29.8.2; `docker compose config` passou; `docker compose build app` passou no estado anterior, ainda usando o Wrapper. Essa evidência é apenas baseline e não foi reutilizada para declarar o aceite pós-T-09.

@@ -2,6 +2,7 @@ package dev.webhooklab.adapters.out.persistence;
 
 import dev.webhooklab.application.port.out.DeliveryAttemptRepository;
 import dev.webhooklab.application.usecase.DeliveryConflictException;
+import dev.webhooklab.application.usecase.EventNotFoundException;
 import dev.webhooklab.domain.DeliveryAttempt;
 import dev.webhooklab.domain.DeliveryAttemptStatus;
 import dev.webhooklab.domain.Event;
@@ -21,37 +22,26 @@ public class JdbcDeliveryAttemptRepository implements DeliveryAttemptRepository 
 
   @Override
   @Transactional
-  public DeliveryClaim start(UUID eventId, Instant startedAt) {
-    int updated =
-        jdbc.update(
-            "UPDATE events SET status = 'SENDING' WHERE id = ? AND status = 'PENDING'", eventId);
+  public DeliveryClaim claimForDelivery(UUID eventId, Instant startedAt) {
+    int updated = jdbc.update(JdbcDeliverySql.CLAIM_PENDING_EVENT, eventId);
     if (updated == 0) {
       boolean exists =
           Boolean.TRUE.equals(
-              jdbc.queryForObject(
-                  "SELECT EXISTS (SELECT 1 FROM events WHERE id = ?)", Boolean.class, eventId));
-      if (!exists) throw new IllegalArgumentException("Event was not found");
+              jdbc.queryForObject(JdbcDeliverySql.EVENT_EXISTS, Boolean.class, eventId));
+      if (!exists) throw new EventNotFoundException();
       throw new DeliveryConflictException();
     }
 
     DeliveryAttempt attempt = DeliveryAttempt.started(eventId, startedAt);
     jdbc.update(
-        "INSERT INTO delivery_attempts (id, event_id, started_at, outcome) VALUES (?, ?, ?, ?)",
+        JdbcDeliverySql.INSERT_STARTED_ATTEMPT,
         attempt.id(),
         eventId,
         Timestamp.from(startedAt),
         DeliveryAttemptStatus.STARTED.name());
     Event event =
         jdbc.queryForObject(
-            "SELECT id, event_type, payload::text, status, created_at FROM events WHERE id = ?",
-            (rs, rowNum) ->
-                new Event(
-                    rs.getObject("id", UUID.class),
-                    rs.getString("event_type"),
-                    rs.getString("payload"),
-                    EventStatus.valueOf(rs.getString("status")),
-                    rs.getTimestamp("created_at").toInstant()),
-            eventId);
+            JdbcDeliverySql.FIND_EVENT, (rs, rowNum) -> JdbcEventMapper.mapEvent(rs), eventId);
     return new DeliveryClaim(event, attempt);
   }
 
@@ -60,14 +50,10 @@ public class JdbcDeliveryAttemptRepository implements DeliveryAttemptRepository 
   public DeliveryClaim complete(
       DeliveryClaim claim, EventStatus eventStatus, DeliveryAttempt attempt) {
     int eventRows =
-        jdbc.update(
-            "UPDATE events SET status = ? WHERE id = ? AND status = 'SENDING'",
-            eventStatus.name(),
-            claim.event().id());
+        jdbc.update(JdbcDeliverySql.COMPLETE_EVENT, eventStatus.name(), claim.event().id());
     int attemptRows =
         jdbc.update(
-            "UPDATE delivery_attempts SET completed_at = ?, duration_ms = ?, outcome = ?, http_status = ? "
-                + "WHERE id = ? AND event_id = ? AND outcome = 'STARTED'",
+            JdbcDeliverySql.COMPLETE_ATTEMPT,
             Timestamp.from(attempt.completedAt()),
             attempt.durationMs(),
             attempt.outcome().name(),

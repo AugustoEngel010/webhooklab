@@ -119,7 +119,7 @@ Uma tarefa só deve ser marcada como concluída quando o critério tiver evidên
 4. Com qual comando?
 5. O que foi observado?
 
-Por exemplo, RF-07 é ligado aos cenários de timeout e erro de conexão de `DeliveryHttpIT`, ao comando `mvnw verify` e ao resultado persistido com `httpStatus` nulo.
+Por exemplo, RF-07 é ligado aos cenários de timeout e erro de conexão de `DeliveryHttpIT`, ao comando `docker compose --profile tools run --rm verify` e ao resultado persistido com `httpStatus` nulo.
 
 ### `docs/adr/`
 
