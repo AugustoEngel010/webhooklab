@@ -1,35 +1,8 @@
 # WebhookLab
 
-## Verificação do build
-
-O build separa testes unitários `*Test` (Surefire) de testes de integração `*IT` (Failsafe). `verify` executa a formatação, a suíte unitária e a suíte de integração; os testes de integração precisam de Docker acessível para PostgreSQL via Testcontainers e WireMock.
-
-```powershell
-& .\mvnw.cmd -B verify
-```
-
-Para verificar ou corrigir a formatação Java:
-
-```powershell
-& .\mvnw.cmd spotless:check
-& .\mvnw.cmd spotless:apply
-```
-
-O Maven falha se a suíte unitária ou de integração não descobrir testes. Não use `-DskipTests`, `-DskipITs` ou propriedades `spotless.*.skip` ao validar a V1. O workflow [`ci.yml`](.github/workflows/ci.yml) repete `./mvnw -B verify` em pull requests e pushes para `main`, com Java 21, cache Maven e relatórios Surefire/Failsafe mesmo quando o job falha.
-
-O WebhookLab é um laboratório local para entender e testar a entrega de webhooks.
-
-Ele registra um evento JSON, salva esse evento no PostgreSQL e, quando solicitado, envia uma notificação HTTP para um sistema externo simulado pelo WireMock. Depois, salva o resultado da tentativa e permite consultar o histórico.
-
-> **Em uma frase:** a API REST controla o laboratório; o WebhookLab envia o webhook; o WireMock finge ser o sistema externo que recebe esse webhook.
 
 ## Processo de desenvolvimento
 
-Este projeto foi desenvolvido com **Spec-Driven Development (SDD)**: os requisitos e decisões de design foram definidos antes da implementação, cada entrega foi dividida em tarefas e os critérios de aceite foram relacionados aos testes e às evidências em `specs/001-v1/`.
-
-Para entender ou apresentar esse processo, consulte [docs/sdd.md](docs/sdd.md). Ele explica como uma ideia vira requisito, tarefa, código, teste e evidência neste projeto.
-
-O processo também é apoiado pelo contexto do agente e pela skill local [`webhooklab-sdd`](.agents/skills/webhooklab-sdd/SKILL.md), criada manualmente para este repositório.
 
 ## O problema que o projeto demonstra
 
@@ -139,6 +112,39 @@ STARTED -> SUCCEEDED
 Na V1, cada evento pode ter somente uma tentativa. Por isso, uma segunda chamada para `/deliver` retorna `409 DELIVERY_CONFLICT` e não gera outro envio.
 
 O `201` retornado por `/deliver` significa que a tentativa foi registrada. O resultado pode ser sucesso ou falha; consulte o evento para ver `outcome` e `httpStatus`.
+
+
+## Verificação do build
+
+O build separa testes unitários `*Test` (Surefire) de testes de integração `*IT` (Failsafe). `verify` executa a formatação, a suíte unitária e a suíte de integração; os testes de integração precisam de Docker acessível para PostgreSQL via Testcontainers e WireMock.
+
+```powershell
+& .\mvnw.cmd -B verify
+```
+
+Para verificar ou corrigir a formatação Java:
+
+```powershell
+& .\mvnw.cmd spotless:check
+& .\mvnw.cmd spotless:apply
+```
+
+O Maven falha se a suíte unitária ou de integração não descobrir testes. Não use `-DskipTests`, `-DskipITs` ou propriedades `spotless.*.skip` ao validar a V1. O workflow [`ci.yml`](.github/workflows/ci.yml) repete `./mvnw -B verify` em pull requests e pushes para `main`, com Java 21, cache Maven e relatórios Surefire/Failsafe mesmo quando o job falha.
+
+O WebhookLab é um laboratório local para entender e testar a entrega de webhooks.
+
+Ele registra um evento JSON, salva esse evento no PostgreSQL e, quando solicitado, envia uma notificação HTTP para um sistema externo simulado pelo WireMock. Depois, salva o resultado da tentativa e permite consultar o histórico.
+
+> **Em uma frase:** a API REST controla o laboratório; o WebhookLab envia o webhook; o WireMock finge ser o sistema externo que recebe esse webhook.
+
+
+
+Este projeto foi desenvolvido com **Spec-Driven Development (SDD)**: os requisitos e decisões de design foram definidos antes da implementação, cada entrega foi dividida em tarefas e os critérios de aceite foram relacionados aos testes e às evidências em `specs/001-v1/`.
+
+Para entender ou apresentar esse processo, consulte [docs/sdd.md](docs/sdd.md). Ele explica como uma ideia vira requisito, tarefa, código, teste e evidência neste projeto.
+
+O processo também é apoiado pelo contexto do agente e pela skill local [`webhooklab-sdd`](.agents/skills/webhooklab-sdd/SKILL.md), criada manualmente para este repositório.
+
 
 ## Pré-requisitos
 
